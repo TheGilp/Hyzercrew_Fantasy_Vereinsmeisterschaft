@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="de" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyzercrew Fantasy Vereinsmeisterschaft - Team erstellen</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            800: '#0F172A',
+                            900: '#0B1120',
+                            950: '#050914',
+                        },
+                        brand: {
+                            red: '#E11D48',
+                            redHover: '#BE123C',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-glass {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="min-h-full text-slate-100 bg-gradient-to-br from-navy-950 via-navy-900 to-slate-950 pb-16 flex flex-col justify-between">
+
+    <!-- Header Navigation -->
+    <header class="w-full bg-navy-800/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
+            <!-- Logo und Titel links -->
+            <div class="flex items-center gap-3">
+                <img src="https://www.hyzercrew.de/wp-content/uploads/2021/11/Hyzercrew_Logo_highres-289x300.png" alt="Hyzercrew Logo" class="w-10 h-10 sm:w-12 sm:h-12 object-contain shrink-0">
+                <div>
+                    <h1 class="font-black text-xl sm:text-2xl tracking-tight text-white leading-tight">
+                        HYZERCREW
+                    </h1>
+                    <p class="text-xs text-rose-500 font-semibold uppercase tracking-wider">Fantasy Vereinsmeisterschaft</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="flex flex-col sm:items-end">
+                    <span class="inline-block px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-full text-xs text-slate-300 font-semibold">
+                        Max. Rating: <span class="text-rose-500 font-bold">3500 Pkt.</span>
+                    </span>
+                    <!-- Sticky Header Budget -->
+                    <div id="sticky-header-budget" class="hidden text-xs text-slate-300 mt-1 px-3">
+                        Budget: <span id="header-remaining-rating-display" class="font-bold text-emerald-400">3500</span> Pkt. übrig
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 pt-8 w-full flex-grow">
+
+        <!-- Banner Global Error Message -->
+        <div id="error-banner" class="hidden max-w-3xl mx-auto mb-6 p-4 rounded-2xl text-sm flex items-center justify-between gap-3 shadow-lg transition-all">
+            <div class="flex items-center gap-3 flex-grow">
+                <svg id="error-banner-icon" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span id="error-message-text" class="font-medium">Ein Fehler ist aufgetreten.</span>
+            </div>
+            <button onclick="hideAlertBanner()" class="p-1 rounded-lg hover:bg-black/20 transition-all cursor-pointer shrink-0" title="Schließen">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- ==================== SECTION 1: TEAMS & KADER ==================== -->
+        <section id="section-teams" class="space-y-8">
+            <div class="text-center">
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
+                    Stelle dein <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-red-400">Fantasy-Team</span> auf
+                </h2>
+                <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto mb-4">
+                    Wähle deinen Teamnamen, 4 Spieler mit D-Rating (max. 3500 Punkte) sowie 1 Spieler ohne Rating aus.
+                </p>
+                <button onclick="openScoringInfoModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer">
+                    Info zur Punktevergabe öffnen
+                </button>
+            </div>
+
+            <!-- Rating Counter Cards -->
+            <div class="max-w-3xl mx-auto custom-glass rounded-2xl p-5 shadow-2xl">
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800/80">
+                        <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Aktuelles Gesamtrating</span>
+                        <div id="current-rating-display" class="text-3xl font-black text-white mt-1">0</div>
+                        <span class="text-xs text-slate-500">von max. 3500</span>
+                    </div>
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800/80">
+                        <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Verbleibendes Budget</span>
+                        <div id="remaining-rating-display" class="text-3xl font-black text-emerald-400 mt-1">3500</div>
+                        <span class="text-xs text-slate-500">Punkte übrig</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Container -->
+            <div id="selection-form-container" class="max-w-3xl mx-auto custom-glass rounded-2xl p-6 shadow-xl">
+                <form id="fantasy-form" onsubmit="handleFormSubmit(event)" class="space-y-6">
+                    <div class="border-b border-slate-800/80 pb-5">
+                        <label for="team-name" class="block text-xs font-bold uppercase tracking-wider text-rose-400 mb-2">
+                            Teamname <span class="text-rose-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="team-name" 
+                            required
+                            placeholder="z.B. Hyzer Heroes" 
+                            oninput="validateSelection()"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent text-sm font-medium transition-all"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                            Spieler mit D-Rating (4 Auswählen - Nach Rating sortiert)
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-300 font-medium mb-1">Spieler 1 (D-Rating)</label>
+                                <select id="rated-1" onchange="validateSelection()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm transition-all"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-300 font-medium mb-1">Spieler 2 (D-Rating)</label>
+                                <select id="rated-2" onchange="validateSelection()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm transition-all"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-300 font-medium mb-1">Spieler 3 (D-Rating)</label>
+                                <select id="rated-3" onchange="validateSelection()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm transition-all"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-300 font-medium mb-1">Spieler 4 (D-Rating)</label>
+                                <select id="rated-4" onchange="validateSelection()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm transition-all"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-800/80">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                            Spieler ohne Rating (1 Auswählen - Alphabetisch sortiert)
+                        </label>
+                        <div>
+                            <label class="block text-xs text-slate-300 font-medium mb-1">Spieler ohne Rating</label>
+                            <select id="newbee-1" onchange="validateSelection()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm transition-all"></select>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex gap-4">
+                        <button id="submit-btn" type="submit" disabled class="w-full bg-brand-red hover:bg-brand-redHover disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed border border-transparent text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-rose-950/50 cursor-pointer">
+                            Team bestätigen
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Single Confirmed Team Output Card -->
+            <div id="confirmed-team-card" class="hidden max-w-3xl mx-auto custom-glass rounded-2xl p-6 shadow-2xl border border-emerald-500/40">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-2">
+                    <div>
+                        <span class="text-xs uppercase font-bold text-emerald-400 tracking-wider">Erfolgreich Erstellt</span>
+                        <h3 id="display-team-name" class="text-2xl font-black text-white mt-0.5">---</h3>
+                    </div>
+                    <div class="self-start sm:self-auto flex flex-wrap items-center gap-2">
+                        <button onclick="shareTeamWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all shadow flex items-center gap-1.5 cursor-pointer">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                            Per WhatsApp teilen
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-3 mb-6" id="team-list-container"></div>
+
+                <div class="bg-slate-900/90 rounded-xl p-4 border border-slate-800 flex flex-wrap justify-between items-center text-sm gap-2">
+                    <span class="text-slate-400">Gesamtrating der 4 Spieler mit D-Rating:</span>
+                    <span id="confirmed-total-rating" class="font-extrabold text-white text-lg">0 / 3500 Pkt.</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal für Info zur Punktevergabe -->
+    <div id="scoring-info-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 relative">
+            <button onclick="closeScoringInfoModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-all cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            
+            <div class="space-y-6">
+                <div>
+                    <span class="text-xs uppercase font-bold text-rose-500 tracking-wider">Regelwerk</span>
+                    <h3 class="text-2xl font-black text-white mt-1">Info zur Punktevergabe</h3>
+                    <p class="text-slate-400 text-xs mt-1">Das Punktesystem setzt sich aus zwei Komponenten zusammen:</p>
+                </div>
+
+                <div class="space-y-4 text-sm text-slate-300">
+                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                        <h4 class="font-bold text-white mb-2 flex items-center gap-2 text-rose-400">
+                            <span class="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs">1</span>
+                            Basis-Punkte für das Gesamtergebnis (Score relativ to Par)
+                        </h4>
+                        <p class="text-xs text-slate-400 mb-3">
+                            Die Basis-Punkte belohnen das Runden-Endergebnis relativ to Par. Ein Ergebnis von +25 ergibt genau 0 Punkte, während −10 (oder besser) mit 120 Basis-Punkten belohnt wird.
+                        </p>
+                        <ul class="space-y-1.5 text-xs text-slate-300">
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-emerald-400">−10 oder besser</span>
+                                <span class="font-bold text-emerald-400">120 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">−7 bis −9</span>
+                                <span class="font-bold text-emerald-400">105 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">−4 bis −6</span>
+                                <span class="font-bold text-emerald-400">90 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">−1 bis −3</span>
+                                <span class="font-bold text-emerald-400">75 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">Even Par (E)</span>
+                                <span class="font-bold text-emerald-400">60 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">+1 bis +3</span>
+                                <span class="font-bold text-emerald-400">45 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">+4 bis +8</span>
+                                <span class="font-bold text-emerald-400">30 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">+9 bis +15</span>
+                                <span class="font-bold text-emerald-400">15 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">+16 bis +24</span>
+                                <span class="font-bold text-emerald-400">5 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-rose-400">+25 oder schlechter</span>
+                                <span class="font-bold text-slate-400">0 Punkte</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                        <h4 class="font-bold text-white mb-2 flex items-center gap-2 text-rose-400">
+                            <span class="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs">2</span>
+                            Bonus-Punkte
+                        </h4>
+                        <p class="text-xs text-slate-400 mb-3">
+                            Damit Spieler auch während der Runde Punkte sammeln und seltene Glanzpunkte belohnt werden, gibt es direkte Boni für spektakuläre Ergebnisse auf einzelnen Bahnen:
+                        </p>
+                        <ul class="space-y-1.5 text-xs text-slate-300">
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">Ace (Hole-in-One)</span>
+                                <span class="font-bold text-emerald-400">+50 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">CTP (Closest-to-the-Pin)</span>
+                                <span class="font-bold text-emerald-400">+40 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">Albatross (−3 auf einer Bahn)</span>
+                                <span class="font-bold text-emerald-400">+30 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">Eagle (−2 auf einer Bahn)</span>
+                                <span class="font-bold text-emerald-400">+15 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">Birdie (−1 auf einer Bahn)</span>
+                                <span class="font-bold text-emerald-400">+4 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">Par / Bogey / Double Bogey</span>
+                                <span class="font-bold text-slate-400">0 Punkte</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="text-center pt-2">
+                    <button onclick="closeScoringInfoModal()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs py-2.5 px-6 rounded-xl transition-all shadow cursor-pointer">
+                        Verstanden & Schließen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-xs text-slate-500 py-6 border-t border-slate-800/80 mt-12">
+        <p>© 2026 Hyzercrew Discgolf Vereinsmeisterschaft - Fantasy League Edition</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        const ratedPlayers = [
+            { name: "Philipp, Fabian", rating: 971 },
+            { name: "Friedrich, Alexander", rating: 970 },
+            { name: "Brandl, Florian", rating: 962 },
+            { name: "Stolte, Paul", rating: 947 },
+            { name: "Herzog, Jonas", rating: 947 },
+            { name: "Heckel, Johannes", rating: 944 },
+            { name: "Gold, Christian", rating: 943 },
+            { name: "Ripa, Gianni", rating: 924 },
+            { name: "Fürstenhöfer, Philip", rating: 906 },
+            { name: "Klein, Dominik", rating: 879 },
+            { name: "Birkner, Lars", rating: 875 },
+            { name: "Rock, Simon", rating: 860 },
+            { name: "Pérez, Tomás", rating: 857 },
+            { name: "Otto, Jonas", rating: 846 },
+            { name: "Erdmann, Andreas", rating: 805 },
+            { name: "Körner, Jürgen", rating: 802 },
+            { name: "Krismansky, Pia", rating: 766 }
+        ];
+
+        const unratedPlayers = [
+            { name: "Beck, Konrad", rating: "ohne Rating" },
+            { name: "Hüsgen, Paul", rating: "ohne Rating" },
+            { name: "Körner, Nadine", rating: "ohne Rating" },
+            { name: "Witte, Philipp", rating: "ohne Rating" },
+            { name: "Zeis, Stefan", rating: "ohne Rating" }
+        ];
+
+        const RATING_CAP = 3500;
+        let submittedTeams = [];
+        let lastCreatedTeam = null;
+
+        const teamNameInput = document.getElementById('team-name');
+        const ratedSelects = [
+            document.getElementById('rated-1'),
+            document.getElementById('rated-2'),
+            document.getElementById('rated-3'),
+            document.getElementById('rated-4')
+        ];
+        const newbeeSelect = document.getElementById('newbee-1');
+        const submitBtn = document.getElementById('submit-btn');
+
+        const currentRatingDisplay = document.getElementById('current-rating-display');
+        const remainingRatingDisplay = document.getElementById('remaining-rating-display');
+        const headerRemainingRatingDisplay = document.getElementById('header-remaining-rating-display');
+        const stickyHeaderBudget = document.getElementById('sticky-header-budget');
+
+        const errorBanner = document.getElementById('error-banner');
+        const errorMessageText = document.getElementById('error-message-text');
+
+        function openScoringInfoModal() {
+            document.getElementById('scoring-info-modal').classList.remove('hidden');
+        }
+
+        function closeScoringInfoModal() {
+            document.getElementById('scoring-info-modal').classList.add('hidden');
+        }
+
+        function initDropdowns() {
+            const sortedRated = [...ratedPlayers].sort((a, b) => b.rating - a.rating);
+            const sortedUnrated = [...unratedPlayers].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+
+            ratedSelects.forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">-- Spieler Auswählen --</option>';
+                sortedRated.forEach(player => {
+                    const opt = document.createElement('option');
+                    opt.value = player.name;
+                    opt.textContent = `${player.name} (${player.rating})`;
+                    select.appendChild(opt);
+                });
+                select.value = currentVal;
+            });
+
+            const currentNewbeeVal = newbeeSelect.value;
+            newbeeSelect.innerHTML = '<option value="">-- Spieler Auswählen --</option>';
+            sortedUnrated.forEach(player => {
+                const opt = document.createElement('option');
+                opt.value = player.name;
+                opt.textContent = `${player.name} (ohne Rating)`;
+                newbeeSelect.appendChild(opt);
+            });
+            newbeeSelect.value = currentNewbeeVal;
+        }
+
+        function validateSelection() {
+            initDropdowns();
+
+            let totalRating = 0;
+            let selectedNames = [];
+            let duplicatesFound = false;
+            let duplicateNames = new Set();
+            let allFilled = true;
+
+            const teamNameEntered = teamNameInput.value.trim().length > 0;
+
+            [...ratedSelects, newbeeSelect].forEach(select => {
+                select.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/50');
+                select.classList.add('border-slate-700');
+            });
+
+            ratedSelects.forEach(select => {
+                const val = select.value;
+                if (!val) {
+                    allFilled = false;
+                } else {
+                    if (selectedNames.includes(val)) {
+                        duplicatesFound = true;
+                        duplicateNames.add(val);
+                    }
+                    selectedNames.push(val);
+
+                    const foundPlayer = ratedPlayers.find(p => p.name === val);
+                    if (foundPlayer) totalRating += foundPlayer.rating;
+                }
+            });
+
+            if (!newbeeSelect.value) {
+                allFilled = false;
+            } else {
+                if (selectedNames.includes(newbeeSelect.value)) {
+                    duplicatesFound = true;
+                    duplicateNames.add(newbeeSelect.value);
+                }
+                selectedNames.push(newbeeSelect.value);
+            }
+
+            if (duplicatesFound) {
+                [...ratedSelects, newbeeSelect].forEach(select => {
+                    if (select.value && duplicateNames.has(select.value)) {
+                        select.classList.remove('border-slate-700');
+                        select.classList.add('border-rose-500', 'ring-2', 'ring-rose-500/50');
+                    }
+                });
+            }
+
+            const remaining = RATING_CAP - totalRating;
+            currentRatingDisplay.textContent = totalRating;
+            remainingRatingDisplay.textContent = remaining;
+            headerRemainingRatingDisplay.textContent = remaining;
+
+            if (totalRating > RATING_CAP) {
+                remainingRatingDisplay.className = 'text-3xl font-black text-rose-500 mt-1';
+                currentRatingDisplay.className = 'text-3xl font-black text-rose-500 mt-1';
+                headerRemainingRatingDisplay.className = 'font-bold text-rose-500';
+            } else {
+                remainingRatingDisplay.className = 'text-3xl font-black text-emerald-400 mt-1';
+                currentRatingDisplay.className = 'text-3xl font-black text-white mt-1';
+                headerRemainingRatingDisplay.className = 'font-bold text-emerald-400';
+            }
+
+            let errorMessage = "";
+            const isOverBudget = totalRating > RATING_CAP;
+
+            if (duplicatesFound) {
+                errorMessage = "Doppelte Spielerauswahl erkannt! Jeder Spieler darf nur einmal gewählt werden.";
+            } else if (isOverBudget) {
+                errorMessage = `Gesamtrating überschritten! Max. ${RATING_CAP} Punkte erlaubt (aktuell: ${totalRating}).`;
+            }
+
+            if (duplicatesFound || isOverBudget) {
+                showAlertBanner(errorMessage, 'error');
+                submitBtn.disabled = true;
+            } else {
+                hideAlertBanner();
+                submitBtn.disabled = !(teamNameEntered && allFilled);
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const teamName = teamNameInput.value.trim();
+
+            if (submittedTeams.some(t => t.name.toLowerCase() === teamName.toLowerCase())) {
+                showAlertBanner(`Ein Team mit dem Namen "${teamName}" existiert bereits.`, 'error');
+                return;
+            }
+
+            let chosen = [];
+            ratedSelects.forEach(select => {
+                const name = select.value;
+                const playerObj = ratedPlayers.find(p => p.name === name);
+                if (playerObj) chosen.push({ ...playerObj });
+            });
+
+            const unratedName = newbeeSelect.value;
+            const unratedObj = unratedPlayers.find(p => p.name === unratedName);
+            if (unratedObj) chosen.push({ ...unratedObj });
+
+            let totalRatingSum = 0;
+            chosen.forEach(p => {
+                if (typeof p.rating === 'number') totalRatingSum += p.rating;
+            });
+
+            const newTeam = {
+                name: teamName,
+                players: chosen,
+                totalRating: totalRatingSum
+            };
+
+            submittedTeams.push(newTeam);
+            lastCreatedTeam = newTeam;
+
+            renderConfirmedCard(newTeam);
+            document.getElementById('selection-form-container').classList.add('hidden');
+            document.getElementById('confirmed-team-card').classList.remove('hidden');
+
+            // Sanftes Scrollen, sodass auch "Erfolgreich erstellt" oben sauber zu sehen ist
+            const confirmedCard = document.getElementById('confirmed-team-card');
+            const cardTop = confirmedCard.getBoundingClientRect().top + window.pageYOffset - 150;
+            window.scrollTo({ top: cardTop, behavior: 'smooth' });
+        }
+
+        function renderConfirmedCard(team) {
+            document.getElementById('display-team-name').textContent = team.name;
+            const container = document.getElementById('team-list-container');
+            container.innerHTML = '';
+
+            team.players.forEach((player, index) => {
+                const isUnrated = typeof player.rating !== 'number';
+                const card = document.createElement('div');
+                card.className = "flex items-center justify-between p-3.5 bg-slate-900/90 rounded-xl border border-slate-800";
+                
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg ${isUnrated ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'} flex items-center justify-center font-bold text-sm">
+                            ${index + 1}
+                        </div>
+                        <div>
+                            <div class="font-bold text-white text-sm sm:text-base">${escapeHtml(player.name)}</div>
+                            <span class="text-xs ${isUnrated ? 'text-amber-400 font-semibold' : 'text-slate-400'}">
+                                ${isUnrated ? 'Kategorie: Spieler ohne Rating' : 'Spieler mit D-Rating'}
+                            </span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="inline-block px-3 py-1 rounded-lg text-xs font-black ${isUnrated ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-slate-800 text-slate-100 border border-slate-700'}">
+                            ${isUnrated ? 'OHNE RATING' : player.rating + ' Pkt.'}
+                        </span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('confirmed-total-rating').textContent = `${team.totalRating} / ${RATING_CAP} Pkt.`;
+        }
+
+        async function shareTeamWhatsApp() {
+            if (!lastCreatedTeam) return;
+            let csvContent = "Teamname;Spieler1;Spieler2;Spieler3;Spieler4;SpielerOhneRating\r\n";
+            let row = [
+                `"${lastCreatedTeam.name}"`,
+                `"${lastCreatedTeam.players[0] ? lastCreatedTeam.players[0].name : ''}"`,
+                `"${lastCreatedTeam.players[1] ? lastCreatedTeam.players[1].name : ''}"`,
+                `"${lastCreatedTeam.players[2] ? lastCreatedTeam.players[2].name : ''}"`,
+                `"${lastCreatedTeam.players[3] ? lastCreatedTeam.players[3].name : ''}"`,
+                `"${lastCreatedTeam.players[4] ? lastCreatedTeam.players[4].name : ''}"`
+            ];
+            csvContent += row.join(";") + "\r\n";
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+            const file = new File([blob], `Team_${lastCreatedTeam.name.replace(/[^a-z0-9]/gi, '_')}.csv`, { type: 'text/csv' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'Hyzercrew Fantasy Team (.csv)',
+                        text: `Hier ist mein Fantasy-Team "${lastCreatedTeam.name}" als CSV-Datei:`,
+                        files: [file]
+                    });
+                    return;
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.log('Sharing abgebrochen oder fehlgeschlagen', error);
+                    }
+                }
+            }
+
+            let text = `🥏 *Hyzercrew Fantasy Team* 🥏\n*Teamname:* ${lastCreatedTeam.name}\n*Gesamtrating:* ${lastCreatedTeam.totalRating} / 3500 Pkt.`;
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showAlertBanner(msg, type = 'error') {
+            errorBanner.classList.remove('hidden', 'bg-rose-950/80', 'border-rose-800', 'text-rose-200', 'bg-amber-950/80', 'border-amber-700', 'text-amber-200');
+            const iconEl = document.getElementById('error-banner-icon');
+
+            if (type === 'warning') {
+                errorBanner.classList.add('bg-amber-950/80', 'border-amber-700', 'text-amber-200');
+                iconEl.className = "w-5 h-5 text-amber-400 shrink-0";
+            } else {
+                errorBanner.classList.add('bg-rose-950/80', 'border-rose-800', 'text-rose-200');
+                iconEl.className = "w-5 h-5 text-rose-400 shrink-0";
+            }
+
+            errorMessageText.textContent = msg;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function hideAlertBanner() {
+            errorBanner.classList.add('hidden');
+        }
+
+        window.onload = function() {
+            initDropdowns();
+            validateSelection();
+
+            // Beobachten der genauen Budget-Zahl (remaining-rating-display) mit exaktem Header-Abstand
+            const observer = new IntersectionObserver(([entry]) => {
+                if (entry.isIntersecting) {
+                    stickyHeaderBudget.classList.add('hidden');
+                } else {
+                    stickyHeaderBudget.classList.remove('hidden');
+                }
+            }, {
+                root: null,
+                rootMargin: '-80px 0px 0px 0px',
+                threshold: 0
+            });
+
+            observer.observe(remainingRatingDisplay);
+        };
+    </script>
+</body>
+</html>
