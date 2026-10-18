@@ -123,7 +123,7 @@
             <div id="selection-form-container" class="max-w-3xl mx-auto custom-glass rounded-2xl p-6 shadow-xl">
                 <form id="fantasy-form" onsubmit="handleFormSubmit(event)" class="space-y-6">
                     
-                    <!-- NEU: Eigener Name -->
+                    <!-- Eigener Name -->
                     <div class="border-b border-slate-800/80 pb-5">
                         <label for="user-name" class="block text-xs font-bold uppercase tracking-wider text-rose-400 mb-2">
                             Dein Name <span class="text-rose-500">*</span>
@@ -343,34 +343,10 @@
     <!-- JavaScript Application Logic -->
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3_Az0JXBIIUfyl9QRQBAuDh_UGmkmYSOmAQ4NFt6znhA2RvF6oBGctYxi_7OtaC1m/exec";
+        const PLAYERS_API_URL = "https://script.google.com/macros/s/AKfycbyvVoSyo324pKqgkEIDzcdRGlMYup-gj46D1080yElZgH8udg6YF4mIWXnCalVgd9NJWA/exec";
 
-        const ratedPlayers = [
-            { name: "Philipp, Fabian", rating: 971 },
-            { name: "Friedrich, Alexander", rating: 970 },
-            { name: "Brandl, Florian", rating: 962 },
-            { name: "Stolte, Paul", rating: 947 },
-            { name: "Herzog, Jonas", rating: 947 },
-            { name: "Heckel, Johannes", rating: 944 },
-            { name: "Gold, Christian", rating: 943 },
-            { name: "Ripa, Gianni", rating: 924 },
-            { name: "Fürstenhöfer, Philip", rating: 906 },
-            { name: "Klein, Dominik", rating: 879 },
-            { name: "Birkner, Lars", rating: 875 },
-            { name: "Rock, Simon", rating: 860 },
-            { name: "Pérez, Tomás", rating: 857 },
-            { name: "Otto, Jonas", rating: 846 },
-            { name: "Erdmann, Andreas", rating: 805 },
-            { name: "Körner, Jürgen", rating: 802 },
-            { name: "Krismansky, Pia", rating: 766 }
-        ];
-
-        const unratedPlayers = [
-            { name: "Beck, Konrad", rating: "ohne Rating" },
-            { name: "Hüsgen, Paul", rating: "ohne Rating" },
-            { name: "Körner, Nadine", rating: "ohne Rating" },
-            { name: "Witte, Philipp", rating: "ohne Rating" },
-            { name: "Zeis, Stefan", rating: "ohne Rating" }
-        ];
+        let ratedPlayers = [];
+        let unratedPlayers = [];
 
         const RATING_CAP = 3500;
         let submittedTeams = [];
@@ -404,6 +380,87 @@
             document.getElementById('scoring-info-modal').classList.add('hidden');
         }
 
+        async function fetchPlayersFromSheet() {
+            try {
+                const response = await fetch(PLAYERS_API_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+                }
+                const rows = await response.json();
+
+                if (!Array.isArray(rows)) {
+                    throw new Error("Die Datenstruktur von Google Sheets ist kein Array.");
+                }
+
+                ratedPlayers = [];
+                unratedPlayers = [];
+
+                // Erste Zeile (Kopfzeile) überspringen
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    const name = row[0] ? String(row[0]).trim() : "";
+                    if (!name) continue;
+
+                    const rawRating = row[1];
+                    const ratingNum = Number(rawRating);
+
+                    // Prüfen ob 0, leer oder keine valide Zahl enthalten ist
+                    if (rawRating === "" || rawRating === null || isNaN(ratingNum) || ratingNum === 0) {
+                        unratedPlayers.push({ name: name, rating: "ohne Rating" });
+                    } else {
+                        ratedPlayers.push({ name: name, rating: ratingNum });
+                    }
+                }
+
+                initDropdowns();
+                validateSelection();
+                loadTeamsFromGoogleSheets();
+            } catch (error) {
+                console.error("Fehler beim Laden der Spieler aus Google Sheets:", error);
+                showAlertBanner("Spielerliste konnte nicht aus Google Sheets geladen werden. Bitte Apps-Script-Freigabe ('Jeder') und Deployment prüfen.", "error");
+            }
+        }
+
+        async function loadTeamsFromGoogleSheets() {
+            if (!GOOGLE_SCRIPT_URL) return;
+
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL);
+                const data = await response.json();
+
+                if (data && data.status === "success" && data.teams) {
+                    submittedTeams = [];
+                    data.teams.forEach(row => {
+                        let pNames = [row.spieler1, row.spieler2, row.spieler3, row.spieler4, row.spielerOhneRating];
+                        let teamPlayersObj = [];
+                        let totalRating = 0;
+
+                        pNames.forEach(pName => {
+                            if (!pName) return;
+                            let found = [...ratedPlayers, ...unratedPlayers].find(p => p.name.toLowerCase() === pName.toLowerCase());
+                            if (found) {
+                                teamPlayersObj.push({ ...found });
+                                if (typeof found.rating === 'number') {
+                                    totalRating += found.rating;
+                                }
+                            }
+                        });
+
+                        if (teamPlayersObj.length > 0) {
+                            submittedTeams.push({
+                                userName: row.userName || "",
+                                name: row.teamName,
+                                players: teamPlayersObj,
+                                totalRating: totalRating
+                            });
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error("Fehler beim Laden der Teams aus Google Sheets:", error);
+            }
+        }
+
         function initDropdowns() {
             const sortedRated = [...ratedPlayers].sort((a, b) => b.rating - a.rating);
             const sortedUnrated = [...unratedPlayers].sort((a, b) => a.name.localeCompare(b.name, 'de'));
@@ -432,8 +489,6 @@
         }
 
         function validateSelection() {
-            initDropdowns();
-
             let totalRating = 0;
             let selectedNames = [];
             let duplicatesFound = false;
@@ -511,12 +566,14 @@
                 showAlertBanner(errorMessage, 'error');
                 submitBtn.disabled = true;
             } else {
-                hideAlertBanner();
+                if (errorBanner.dataset.source !== 'api') {
+                    hideAlertBanner();
+                }
                 submitBtn.disabled = !(userNameEntered && teamNameEntered && allFilled);
             }
         }
 
-        async function saveToGoogleSheets(teamData) {
+        async function saveToGoogleSheets(teamData, isUpdate = false) {
             if (!GOOGLE_SCRIPT_URL) return;
 
             const payload = {
@@ -526,7 +583,8 @@
                 spieler2: teamData.players[1] ? teamData.players[1].name : "",
                 spieler3: teamData.players[2] ? teamData.players[2].name : "",
                 spieler4: teamData.players[3] ? teamData.players[3].name : "",
-                spielerOhneRating: teamData.players[4] ? teamData.players[4].name : ""
+                spielerOhneRating: teamData.players[4] ? teamData.players[4].name : "",
+                isUpdate: isUpdate
             };
 
             try {
@@ -548,9 +606,17 @@
             const userName = userNameInput.value.trim();
             const teamName = teamNameInput.value.trim();
 
-            if (submittedTeams.some(t => t.name.toLowerCase() === teamName.toLowerCase())) {
-                showAlertBanner(`Ein Team mit dem Namen "${teamName}" existiert bereits.`, 'error');
-                return;
+            // Prüfen, ob Kombination aus Ersteller-Name und Teamname bereits existiert
+            const existingIndex = submittedTeams.findIndex(t => 
+                t.name.toLowerCase() === teamName.toLowerCase() && 
+                (t.userName || "").toLowerCase() === userName.toLowerCase()
+            );
+
+            if (existingIndex !== -1) {
+                const confirmUpdate = confirm(`Ein Team von "${userName}" mit dem Namen "${teamName}" existiert bereits.\n\nMöchtest du das bestehende Team mit den neuen Spielern überschreiben/aktualisieren?`);
+                if (!confirmUpdate) {
+                    return;
+                }
             }
 
             submitBtn.disabled = true;
@@ -579,15 +645,23 @@
                 totalRating: totalRatingSum
             };
 
-            // An Google Sheets senden
-            await saveToGoogleSheets(newTeam);
+            const isTeamUpdate = (existingIndex !== -1);
+            // An Google Sheets senden (mit isUpdate Flag)
+            await saveToGoogleSheets(newTeam, isTeamUpdate);
 
-            submittedTeams.push(newTeam);
+            if (isTeamUpdate) {
+                submittedTeams[existingIndex] = newTeam;
+            } else {
+                submittedTeams.push(newTeam);
+            }
             lastCreatedTeam = newTeam;
 
             renderConfirmedCard(newTeam);
             document.getElementById('selection-form-container').classList.add('hidden');
             document.getElementById('confirmed-team-card').classList.remove('hidden');
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Team bestätigen";
 
             setTimeout(() => {
                 const confirmedCard = document.getElementById('confirmed-team-card');
@@ -674,17 +748,21 @@
                 iconEl.className = "w-5 h-5 text-rose-400 shrink-0";
             }
 
+            if (type === 'error' && msg.includes('Google Sheets')) {
+                errorBanner.dataset.source = 'api';
+            }
+
             errorMessageText.textContent = msg;
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function hideAlertBanner() {
             errorBanner.classList.add('hidden');
+            delete errorBanner.dataset.source;
         }
 
         window.onload = function() {
-            initDropdowns();
-            validateSelection();
+            fetchPlayersFromSheet();
 
             const observer = new IntersectionObserver(([entry]) => {
                 if (entry.isIntersecting) {
