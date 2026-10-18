@@ -42,7 +42,7 @@
 
     <!-- Header Navigation -->
     <header class="w-full bg-navy-800/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between min-h-[72px] gap-2">
+        <div id="header-container" class="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between min-h-[72px] gap-2 transition-all duration-300">
             <!-- Linker Bereich: Logo -->
             <div class="flex items-center shrink-0 z-10">
                 <img src="https://www.hyzercrew.de/wp-content/uploads/2021/11/Hyzercrew_Logo_highres-289x300.png" alt="Hyzercrew Logo" class="w-10 h-10 sm:w-12 sm:h-12 object-contain">
@@ -50,10 +50,10 @@
 
             <!-- Titel-Bereich und Sticky-Infos (erscheinen nur beim Scrollen) -->
             <div class="text-center flex-grow px-2 sm:px-4">
-                <h1 class="font-black text-sm sm:text-2xl tracking-tight text-white leading-tight block">
+                <h1 class="font-black text-lg sm:text-3xl tracking-tight text-white leading-tight block">
                     HYZERCREW
                 </h1>
-                <p class="text-[9px] sm:text-xs text-rose-500 font-semibold uppercase tracking-wider block mt-0.5 sm:mt-1 leading-tight">
+                <p class="text-xs sm:text-sm text-rose-500 font-semibold uppercase tracking-wider block mt-0.5 sm:mt-1 leading-tight">
                     Fantasy Vereinsmeisterschaft
                 </p>
                 
@@ -375,6 +375,7 @@
         const remainingRatingDisplay = document.getElementById('remaining-rating-display');
         const headerRemainingRatingDisplay = document.getElementById('header-remaining-rating-display');
         const stickyHeaderContainer = document.getElementById('sticky-header-container');
+        const headerContainer = document.getElementById('header-container');
 
         const errorBanner = document.getElementById('error-banner');
         const errorMessageText = document.getElementById('error-message-text');
@@ -564,13 +565,17 @@
             submittedTeams.push(newTeam);
             lastCreatedTeam = newTeam;
 
+            // ERST die Bestätigungskarte einblenden und das Formular ausblenden, BEVOR gescrollt wird!
             renderConfirmedCard(newTeam);
             document.getElementById('selection-form-container').classList.add('hidden');
             document.getElementById('confirmed-team-card').classList.remove('hidden');
 
-            const confirmedCard = document.getElementById('confirmed-team-card');
-            const cardTop = confirmedCard.getBoundingClientRect().top + window.pageYOffset - 150;
-            window.scrollTo({ top: cardTop, behavior: 'smooth' });
+            // Kurz per setTimeout warten, bis das DOM fertig gerendert ist, dann exakt scrollen
+            setTimeout(() => {
+                const confirmedCard = document.getElementById('confirmed-team-card');
+                const cardTop = confirmedCard.getBoundingClientRect().top + window.pageYOffset - 110;
+                window.scrollTo({ top: cardTop, behavior: 'smooth' });
+            }, 50);
         }
 
         function renderConfirmedCard(team) {
@@ -607,38 +612,23 @@
             document.getElementById('confirmed-total-rating').textContent = `${team.totalRating} / ${RATING_CAP} Pkt.`;
         }
 
-        async function shareTeamWhatsApp() {
+        function shareTeamWhatsApp() {
             if (!lastCreatedTeam) return;
-            let csvContent = "Teamname;Spieler1;Spieler2;Spieler3;Spieler4;SpielerOhneRating\r\n";
-            let row = [
-                `"${lastCreatedTeam.name}"`,
-                `"${lastCreatedTeam.players[0] ? lastCreatedTeam.players[0].name : ''}"`,
-                `"${lastCreatedTeam.players[1] ? lastCreatedTeam.players[1].name : ''}"`,
-                `"${lastCreatedTeam.players[2] ? lastCreatedTeam.players[2].name : ''}"`,
-                `"${lastCreatedTeam.players[3] ? lastCreatedTeam.players[3].name : ''}"`,
-                `"${lastCreatedTeam.players[4] ? lastCreatedTeam.players[4].name : ''}"`
-            ];
-            csvContent += row.join(";") + "\r\n";
 
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-            const file = new File([blob], `Team_${lastCreatedTeam.name.replace(/[^a-z0-9]/gi, '_')}.csv`, { type: 'text/csv' });
+            let text = `🥏 *Hyzercrew Fantasy Vereinsmeisterschaft* 🥏\n\n`;
+            text += `Mein Team: *${lastCreatedTeam.name}*\n`;
+            text += `Gesamtrating: *${lastCreatedTeam.totalRating} / ${RATING_CAP} Pkt.*\n\n`;
+            text += `*Mein Kader:*\n`;
 
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        title: 'Hyzercrew Fantasy Team (.csv)',
-                        text: `Hier ist mein Fantasy-Team "${lastCreatedTeam.name}" als CSV-Datei:`,
-                        files: [file]
-                    });
-                    return;
-                } catch (error) {
-                    if (error.name !== 'AbortError') {
-                        console.log('Sharing abgebrochen oder fehlgeschlagen', error);
-                    }
-                }
-            }
+            lastCreatedTeam.players.forEach((player, index) => {
+                const isUnrated = typeof player.rating !== 'number';
+                const ratingInfo = isUnrated ? 'Ohne Rating' : `${player.rating} Pkt.`;
+                text += `${index + 1}. ${player.name} (${ratingInfo})\n`;
+            });
 
-            let text = `🥏 *Hyzercrew Fantasy Team* 🥏\n*Teamname:* ${lastCreatedTeam.name}\n*Gesamtrating:* ${lastCreatedTeam.totalRating} / 3500 Pkt.`;
+            text += `\nWillst du dir auch dein eigenes Fantasy-Team zusammenstellen? Dann klicke hier:\n`;
+            text += `https://thegilp.github.io/Hyzercrew_Fantasy_Vereinsmeisterschaft/`;
+
             const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
             window.open(whatsappUrl, '_blank');
         }
@@ -679,8 +669,12 @@
             const observer = new IntersectionObserver(([entry]) => {
                 if (entry.isIntersecting) {
                     stickyHeaderContainer.classList.add('hidden');
+                    headerContainer.classList.remove('min-h-[108px]');
+                    headerContainer.classList.add('min-h-[72px]');
                 } else {
                     stickyHeaderContainer.classList.remove('hidden');
+                    headerContainer.classList.remove('min-h-[72px]');
+                    headerContainer.classList.add('min-h-[108px]');
                 }
             }, {
                 root: null,
