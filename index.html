@@ -48,7 +48,7 @@
                 <img src="https://www.hyzercrew.de/wp-content/uploads/2021/11/Hyzercrew_Logo_highres-289x300.png" alt="Hyzercrew Logo" class="w-10 h-10 sm:w-12 sm:h-12 object-contain">
             </div>
 
-            <!-- Titel-Bereich und Sticky-Infos (erscheinen nur beim Scrollen) -->
+            <!-- Titel-Bereich und Sticky-Infos -->
             <div class="text-center flex-grow px-2 sm:px-4">
                 <h1 class="font-black text-lg sm:text-3xl tracking-tight text-white leading-tight block">
                     HYZERCREW
@@ -57,7 +57,6 @@
                     Fantasy Vereinsmeisterschaft
                 </p>
                 
-                <!-- Sticky Badges (eingeblendet, wenn das Budget oben aus dem Sichtfeld scrollt) -->
                 <div id="sticky-header-container" class="hidden mt-1.5 flex justify-center items-center gap-1.5 flex-wrap">
                     <span class="inline-block px-2.5 py-0.5 sm:px-3 sm:py-1 bg-slate-900 border border-slate-800 rounded-full text-[10px] sm:text-xs text-slate-300 font-semibold">
                         Max: <span class="text-rose-500 font-bold">3500 Pkt.</span>
@@ -68,7 +67,6 @@
                 </div>
             </div>
 
-            <!-- Rechter Platzhalter für Symmetrie -->
             <div class="w-10 sm:w-12 shrink-0 z-10"></div>
         </div>
     </header>
@@ -91,14 +89,14 @@
             </button>
         </div>
 
-        <!-- ==================== SECTION 1: TEAMS & KADER ==================== -->
+        <!-- SECTION: TEAMS & KADER -->
         <section id="section-teams" class="space-y-8">
             <div class="text-center">
                 <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
                     Stelle dein <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-red-400">Fantasy-Team</span> auf
                 </h2>
                 <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto mb-4">
-                    Wähle deinen Teamnamen, 4 Spieler mit D-Rating (max. 3500 Punkte) sowie 1 Spieler ohne Rating aus.
+                    Gib deinen Namen und Teamnamen ein und wähle 4 Spieler mit D-Rating sowie 1 Spieler ohne Rating aus.
                 </p>
                 <button onclick="openScoringInfoModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer">
                     Info zur Punktevergabe öffnen
@@ -124,6 +122,23 @@
             <!-- Form Container -->
             <div id="selection-form-container" class="max-w-3xl mx-auto custom-glass rounded-2xl p-6 shadow-xl">
                 <form id="fantasy-form" onsubmit="handleFormSubmit(event)" class="space-y-6">
+                    
+                    <!-- NEU: Eigener Name -->
+                    <div class="border-b border-slate-800/80 pb-5">
+                        <label for="user-name" class="block text-xs font-bold uppercase tracking-wider text-rose-400 mb-2">
+                            Dein Name <span class="text-rose-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="user-name" 
+                            required
+                            placeholder="z.B. Max Mustermann" 
+                            oninput="validateSelection()"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent text-sm font-medium transition-all"
+                        >
+                    </div>
+
+                    <!-- Teamname -->
                     <div class="border-b border-slate-800/80 pb-5">
                         <label for="team-name" class="block text-xs font-bold uppercase tracking-wider text-rose-400 mb-2">
                             Teamname <span class="text-rose-500">*</span>
@@ -186,6 +201,7 @@
                     <div>
                         <span class="text-xs uppercase font-bold text-emerald-400 tracking-wider">Erfolgreich Erstellt &amp; Gespeichert</span>
                         <h3 id="display-team-name" class="text-2xl font-black text-white mt-0.5">---</h3>
+                        <p id="display-user-name" class="text-xs text-slate-400 mt-1"></p>
                     </div>
                     <div class="self-start sm:self-auto flex flex-wrap items-center gap-2">
                         <button onclick="shareTeamWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all shadow flex items-center gap-1.5 cursor-pointer">
@@ -326,7 +342,6 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        // Eingetragene Google Apps Script Web-App URL
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3_Az0JXBIIUfyl9QRQBAuDh_UGmkmYSOmAQ4NFt6znhA2RvF6oBGctYxi_7OtaC1m/exec";
 
         const ratedPlayers = [
@@ -361,6 +376,7 @@
         let submittedTeams = [];
         let lastCreatedTeam = null;
 
+        const userNameInput = document.getElementById('user-name');
         const teamNameInput = document.getElementById('team-name');
         const ratedSelects = [
             document.getElementById('rated-1'),
@@ -424,6 +440,7 @@
             let duplicateNames = new Set();
             let allFilled = true;
 
+            const userNameEntered = userNameInput.value.trim().length > 0;
             const teamNameEntered = teamNameInput.value.trim().length > 0;
 
             [...ratedSelects, newbeeSelect].forEach(select => {
@@ -495,7 +512,7 @@
                 submitBtn.disabled = true;
             } else {
                 hideAlertBanner();
-                submitBtn.disabled = !(teamNameEntered && allFilled);
+                submitBtn.disabled = !(userNameEntered && teamNameEntered && allFilled);
             }
         }
 
@@ -504,6 +521,7 @@
 
             const payload = {
                 teamName: teamData.name,
+                userName: teamData.userName,
                 spieler1: teamData.players[0] ? teamData.players[0].name : "",
                 spieler2: teamData.players[1] ? teamData.players[1].name : "",
                 spieler3: teamData.players[2] ? teamData.players[2].name : "",
@@ -527,6 +545,7 @@
 
         async function handleFormSubmit(e) {
             e.preventDefault();
+            const userName = userNameInput.value.trim();
             const teamName = teamNameInput.value.trim();
 
             if (submittedTeams.some(t => t.name.toLowerCase() === teamName.toLowerCase())) {
@@ -554,6 +573,7 @@
             });
 
             const newTeam = {
+                userName: userName,
                 name: teamName,
                 players: chosen,
                 totalRating: totalRatingSum
@@ -565,12 +585,10 @@
             submittedTeams.push(newTeam);
             lastCreatedTeam = newTeam;
 
-            // ERST die Bestätigungskarte einblenden und das Formular ausblenden, BEVOR gescrollt wird!
             renderConfirmedCard(newTeam);
             document.getElementById('selection-form-container').classList.add('hidden');
             document.getElementById('confirmed-team-card').classList.remove('hidden');
 
-            // Kurz per setTimeout warten, bis das DOM fertig gerendert ist, dann exakt scrollen
             setTimeout(() => {
                 const confirmedCard = document.getElementById('confirmed-team-card');
                 const cardTop = confirmedCard.getBoundingClientRect().top + window.pageYOffset - 110;
@@ -580,6 +598,7 @@
 
         function renderConfirmedCard(team) {
             document.getElementById('display-team-name').textContent = team.name;
+            document.getElementById('display-user-name').textContent = `Erstellt von: ${team.userName}`;
             const container = document.getElementById('team-list-container');
             container.innerHTML = '';
 
@@ -616,6 +635,7 @@
             if (!lastCreatedTeam) return;
 
             let text = `🥏 *Hyzercrew Fantasy Vereinsmeisterschaft* 🥏\n\n`;
+            text += `Manager: *${lastCreatedTeam.userName}*\n`;
             text += `Mein Team: *${lastCreatedTeam.name}*\n`;
             text += `Gesamtrating: *${lastCreatedTeam.totalRating} / ${RATING_CAP} Pkt.*\n\n`;
             text += `*Mein Kader:*\n`;
