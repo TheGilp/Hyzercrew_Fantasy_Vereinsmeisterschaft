@@ -179,7 +179,7 @@
             <div id="confirmed-team-card" class="hidden max-w-3xl mx-auto custom-glass rounded-2xl p-6 shadow-2xl border border-emerald-500/40">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-2">
                     <div>
-                        <span class="text-xs uppercase font-bold text-emerald-400 tracking-wider">Erfolgreich Erstellt</span>
+                        <span class="text-xs uppercase font-bold text-emerald-400 tracking-wider">Erfolgreich Erstellt &amp; Gespeichert</span>
                         <h3 id="display-team-name" class="text-2xl font-black text-white mt-0.5">---</h3>
                     </div>
                     <div class="self-start sm:self-auto flex flex-wrap items-center gap-2">
@@ -307,7 +307,7 @@
 
                 <div class="text-center pt-2">
                     <button onclick="closeScoringInfoModal()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs py-2.5 px-6 rounded-xl transition-all shadow cursor-pointer">
-                        Verstanden & Schließen
+                        Verstanden &amp; Schließen
                     </button>
                 </div>
             </div>
@@ -321,6 +321,9 @@
 
     <!-- JavaScript Application Logic -->
     <script>
+        // Eingetragene Google Apps Script Web-App URL
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3_Az0JXBIIUfyl9QRQBAuDh_UGmkmYSOmAQ4NFt6znhA2RvF6oBGctYxi_7OtaC1m/exec";
+
         const ratedPlayers = [
             { name: "Philipp, Fabian", rating: 971 },
             { name: "Friedrich, Alexander", rating: 970 },
@@ -490,7 +493,33 @@
             }
         }
 
-        function handleFormSubmit(e) {
+        async function saveToGoogleSheets(teamData) {
+            if (!GOOGLE_SCRIPT_URL) return;
+
+            const payload = {
+                teamName: teamData.name,
+                spieler1: teamData.players[0] ? teamData.players[0].name : "",
+                spieler2: teamData.players[1] ? teamData.players[1].name : "",
+                spieler3: teamData.players[2] ? teamData.players[2].name : "",
+                spieler4: teamData.players[3] ? teamData.players[3].name : "",
+                spielerOhneRating: teamData.players[4] ? teamData.players[4].name : ""
+            };
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify(payload)
+                });
+            } catch (error) {
+                console.error("Fehler beim Speichern in Google Sheets:", error);
+            }
+        }
+
+        async function handleFormSubmit(e) {
             e.preventDefault();
             const teamName = teamNameInput.value.trim();
 
@@ -498,6 +527,9 @@
                 showAlertBanner(`Ein Team mit dem Namen "${teamName}" existiert bereits.`, 'error');
                 return;
             }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Wird gespeichert...";
 
             let chosen = [];
             ratedSelects.forEach(select => {
@@ -521,6 +553,9 @@
                 totalRating: totalRatingSum
             };
 
+            // An Google Sheets senden
+            await saveToGoogleSheets(newTeam);
+
             submittedTeams.push(newTeam);
             lastCreatedTeam = newTeam;
 
@@ -528,7 +563,6 @@
             document.getElementById('selection-form-container').classList.add('hidden');
             document.getElementById('confirmed-team-card').classList.remove('hidden');
 
-            // Sanftes Scrollen, sodass auch "Erfolgreich erstellt" oben sauber zu sehen ist
             const confirmedCard = document.getElementById('confirmed-team-card');
             const cardTop = confirmedCard.getBoundingClientRect().top + window.pageYOffset - 150;
             window.scrollTo({ top: cardTop, behavior: 'smooth' });
@@ -637,7 +671,6 @@
             initDropdowns();
             validateSelection();
 
-            // Beobachten der genauen Budget-Zahl (remaining-rating-display) mit exaktem Header-Abstand
             const observer = new IntersectionObserver(([entry]) => {
                 if (entry.isIntersecting) {
                     stickyHeaderBudget.classList.add('hidden');
