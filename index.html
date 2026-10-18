@@ -233,10 +233,11 @@
                 <div>
                     <span class="text-xs uppercase font-bold text-rose-500 tracking-wider">Regelwerk</span>
                     <h3 class="text-2xl font-black text-white mt-1">Info zur Punktevergabe</h3>
-                    <p class="text-slate-400 text-xs mt-1">Das Punktesystem setzt sich aus zwei Komponenten zusammen:</p>
+                    <p class="text-slate-400 text-xs mt-1">Das Punktesystem setzt sich aus drei Komponenten zusammen:</p>
                 </div>
 
                 <div class="space-y-4 text-sm text-slate-300">
+                    <!-- ABSCHNITT 1 -->
                     <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
                         <h4 class="font-bold text-white mb-2 flex items-center gap-2 text-rose-400">
                             <span class="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs">1</span>
@@ -289,38 +290,68 @@
                         </ul>
                     </div>
 
+                    <!-- ABSCHNITT 2: Bahnenbezogene Bonuspunkte -->
                     <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
                         <h4 class="font-bold text-white mb-2 flex items-center gap-2 text-rose-400">
                             <span class="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs">2</span>
-                            Bonus-Punkte
+                            Bahnenbezogene Bonuspunkte
                         </h4>
                         <p class="text-xs text-slate-400 mb-3">
-                            Damit Spieler auch während der Runde Punkte sammeln und seltene Glanzpunkte belohnt werden, gibt es direkte Boni für spektakuläre Ergebnisse auf einzelnen Bahnen:
+                            Direkte Boni für herausragende Ergebnisse auf einzelnen Bahnen:
                         </p>
                         <ul class="space-y-1.5 text-xs text-slate-300">
                             <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
-                                <span class="font-semibold text-white">Ace (Hole-in-One)</span>
+                                <span class="font-semibold text-white">Ace <span class="text-slate-400 font-normal text-[11px]">(Hole-in-One)</span></span>
                                 <span class="font-bold text-emerald-400">+50 Punkte</span>
                             </li>
                             <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
-                                <span class="font-semibold text-white">CTP (Closest-to-the-Pin)</span>
+                                <span class="font-semibold text-white">Albatross <span class="text-slate-400 font-normal text-[11px]">(−3 auf einer Bahn)</span></span>
                                 <span class="font-bold text-emerald-400">+40 Punkte</span>
                             </li>
                             <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
-                                <span class="font-semibold text-white">Albatross (−3 auf einer Bahn)</span>
-                                <span class="font-bold text-emerald-400">+30 Punkte</span>
-                            </li>
-                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
-                                <span class="font-semibold text-white">Eagle (−2 auf einer Bahn)</span>
+                                <span class="font-semibold text-white">Eagle <span class="text-slate-400 font-normal text-[11px]">(−2 auf einer Bahn)</span></span>
                                 <span class="font-bold text-emerald-400">+15 Punkte</span>
                             </li>
                             <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
-                                <span class="font-semibold text-white">Birdie (−1 auf einer Bahn)</span>
+                                <span class="font-semibold text-white">Birdie <span class="text-slate-400 font-normal text-[11px]">(−1 auf einer Bahn)</span></span>
                                 <span class="font-bold text-emerald-400">+4 Punkte</span>
                             </li>
                             <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
                                 <span class="font-semibold text-white">Par / Bogey / Double Bogey</span>
                                 <span class="font-bold text-slate-400">0 Punkte</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- ABSCHNITT 3: Rundenbezogene Bonuspunkte -->
+                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                        <h4 class="font-bold text-white mb-2 flex items-center gap-2 text-rose-400">
+                            <span class="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs">3</span>
+                            Rundenbezogene Bonuspunkte
+                        </h4>
+                        <p class="text-xs text-slate-400 mb-3">
+                            Fehlerfreies Spiel und besondere Rundenleistungen werden mit folgenden Bonuspunkten belohnt:
+                        </p>
+                        <ul class="space-y-1.5 text-xs text-slate-300">
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">CTP <span class="text-slate-400 font-normal text-[11px]">(Closest-to-the-Pin)</span></span>
+                                <span class="font-bold text-emerald-400">+25 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">Bogey freie Runde</span>
+                                <span class="font-bold text-emerald-400">+10 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">OB freie Runde</span>
+                                <span class="font-bold text-emerald-400">+5 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">Turkey</span>
+                                <span class="font-bold text-emerald-400">+5 Punkte</span>
+                            </li>
+                            <li class="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-slate-800">
+                                <span class="font-semibold text-white">Motivationsbonus <span class="text-slate-400 font-normal text-[11px]">(3 Bogeys in Folge – max. 1x pro Runde)</span></span>
+                                <span class="font-bold text-emerald-400">+5 Punkte</span>
                             </li>
                         </ul>
                     </div>
