@@ -237,7 +237,10 @@
             <div id="confirmed-team-card" class="hidden max-w-3xl mx-auto custom-glass rounded-2xl p-6 shadow-2xl border border-emerald-500/40">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-2">
                     <div>
-                        <span class="text-xs uppercase font-bold text-emerald-400 tracking-wider">Erfolgreich Erstellt &amp; Gespeichert</span>
+                        <span class="text-xs uppercase font-bold text-emerald-400 tracking-wider inline-flex items-center gap-2">
+                            Erfolgreich Erstellt &amp; Gespeichert 
+                            <span id="display-team-password" class="font-bold text-white text-sm bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-lg"></span>
+                        </span>
                         <h3 id="display-team-name" class="text-2xl font-black text-white mt-0.5">---</h3>
                         <p id="display-user-name" class="text-xs text-slate-400 mt-1"></p>
                     </div>
@@ -265,10 +268,7 @@
                     Erstellte <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-red-400">Teams</span>
                 </h2>
                 <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto mb-2">
-                    Übersicht aller bisher eingereichten Fantasy-Teams.
-                </p>
-                <p class="text-xs text-slate-500 italic max-w-md mx-auto">
-                    * Ersteller und Kader werden aus Vertraulichkeitsgründen zum aktuellen Zeitpunkt noch nicht öffentlich angezeigt.
+                    Übersicht aller bisher eingereichten Fantasy-Teams und ihrer Manager.
                 </p>
             </div>
 
@@ -304,6 +304,35 @@
         </section>
 
     </main>
+
+    <!-- Modal für Kennwortabfrage beim Team Ändern -->
+    <div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <h3 class="text-xl font-bold text-white mb-2">Team ändern – Kennwort erforderlich</h3>
+            <p class="text-slate-400 text-xs mb-4">
+                Ein Team mit diesem Namen existiert bereits. Bitte gib das Kennwort ein, um die Änderungen vorzunehmen.
+            </p>
+            <div class="mb-4">
+                <label for="modal-password-input" class="block text-xs font-bold uppercase tracking-wider text-rose-400 mb-1">
+                    Kennwort
+                </label>
+                <input 
+                    type="password" 
+                    id="modal-password-input" 
+                    placeholder="Dein Kennwort"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm"
+                >
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closePasswordModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition-all cursor-pointer">
+                    Abbrechen
+                </button>
+                <button onclick="confirmPasswordSubmit()" class="px-4 py-2 bg-brand-red hover:bg-brand-redHover text-white font-bold text-xs rounded-xl transition-all cursor-pointer">
+                    Bestätigen &amp; Speichern
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal für Info zur Punktevergabe -->
     <div id="scoring-info-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
@@ -467,6 +496,7 @@
         let lastCreatedTeam = null;
         let currentActiveTab = 'create';
         let isTeamsLoaded = false;
+        let pendingTeamSubmit = null;
 
         const userNameInput = document.getElementById('user-name');
         const teamNameInput = document.getElementById('team-name');
@@ -496,6 +526,16 @@
             document.getElementById('scoring-info-modal').classList.add('hidden');
         }
 
+        function openPasswordModal() {
+            document.getElementById('modal-password-input').value = "";
+            document.getElementById('password-modal').classList.remove('hidden');
+        }
+
+        function closePasswordModal() {
+            document.getElementById('password-modal').classList.add('hidden');
+            pendingTeamSubmit = null;
+        }
+
         function switchTab(tabId) {
             currentActiveTab = tabId;
             document.getElementById('section-create').classList.add('hidden');
@@ -518,7 +558,6 @@
                 if (document.getElementById('tab-btn-teams')) document.getElementById('tab-btn-teams').className = 'tab-btn-active px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer';
                 if (document.getElementById('tab-btn-teams-m')) document.getElementById('tab-btn-teams-m').className = 'tab-btn-active px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-1 justify-center';
                 
-                // Sticky Header im 2. Reiter komplett ausblenden
                 stickyHeaderContainer.classList.add('hidden');
                 headerContainer.classList.remove('min-h-[108px]');
                 headerContainer.classList.add('min-h-[72px]');
@@ -529,7 +568,6 @@
                 if (document.getElementById('tab-btn-live')) document.getElementById('tab-btn-live').className = 'tab-btn-active px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer';
                 if (document.getElementById('tab-btn-live-m')) document.getElementById('tab-btn-live-m').className = 'tab-btn-active px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-1 justify-center';
                 
-                // Sticky Header im 3. Reiter ebenfalls komplett ausblenden
                 stickyHeaderContainer.classList.add('hidden');
                 headerContainer.classList.remove('min-h-[108px]');
                 headerContainer.classList.add('min-h-[72px]');
@@ -606,7 +644,8 @@
                                 userName: row.userName || "",
                                 name: row.teamName,
                                 players: teamPlayersObj,
-                                totalRating: totalRating
+                                totalRating: totalRating,
+                                password: row.password || ""
                             });
                         }
                     });
@@ -737,8 +776,8 @@
             }
         }
 
-        async function saveToGoogleSheets(teamData, isUpdate = false) {
-            if (!GOOGLE_SCRIPT_URL) return;
+        async function saveToGoogleSheets(teamData, isUpdate = false, password = "") {
+            if (!GOOGLE_SCRIPT_URL) return null;
 
             const payload = {
                 teamName: teamData.name,
@@ -748,20 +787,23 @@
                 spieler3: teamData.players[2] ? teamData.players[2].name : "",
                 spieler4: teamData.players[3] ? teamData.players[3].name : "",
                 spielerOhneRating: teamData.players[4] ? teamData.players[4].name : "",
-                isUpdate: isUpdate
+                isUpdate: isUpdate,
+                password: password
             };
 
             try {
-                await fetch(GOOGLE_SCRIPT_URL, {
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
                     headers: {
                         'Content-Type': 'text/plain;charset=utf-8'
                     },
                     body: JSON.stringify(payload)
                 });
+                const result = await res.json();
+                return result;
             } catch (error) {
                 console.error("Fehler beim Speichern in Google Sheets:", error);
+                return { status: "error", message: error.toString() };
             }
         }
 
@@ -774,16 +816,6 @@
                 t.name.toLowerCase() === teamName.toLowerCase() && 
                 (t.userName || "").toLowerCase() === userName.toLowerCase()
             );
-
-            if (existingIndex !== -1) {
-                const confirmUpdate = confirm(`Ein Team von "${userName}" mit dem Namen "${teamName}" existiert bereits.\n\nMöchtest du das bestehende Team mit den neuen Spielern überschreiben/aktualisieren?`);
-                if (!confirmUpdate) {
-                    return;
-                }
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Wird gespeichert...";
 
             let chosen = [];
             ratedSelects.forEach(select => {
@@ -808,17 +840,53 @@
                 totalRating: totalRatingSum
             };
 
-            const isTeamUpdate = (existingIndex !== -1);
-            await saveToGoogleSheets(newTeam, isTeamUpdate);
-
-            if (isTeamUpdate) {
-                submittedTeams[existingIndex] = newTeam;
-            } else {
-                submittedTeams.push(newTeam);
+            if (existingIndex !== -1) {
+                pendingTeamSubmit = { newTeam, existingIndex };
+                openPasswordModal();
+                return;
             }
-            lastCreatedTeam = newTeam;
 
-            renderConfirmedCard(newTeam);
+            await executeSaveTeam(newTeam, false, "", -1);
+        }
+
+        async function confirmPasswordSubmit() {
+            if (!pendingTeamSubmit) return;
+            const enteredPassword = document.getElementById('modal-password-input').value.trim();
+
+            if (!enteredPassword) {
+                alert("Bitte gib das Kennwort ein.");
+                return;
+            }
+
+            const { newTeam, existingIndex } = pendingTeamSubmit;
+            closePasswordModal();
+            await executeSaveTeam(newTeam, true, enteredPassword, existingIndex);
+        }
+
+        async function executeSaveTeam(teamObj, isUpdate, password, existingIndex) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Wird gespeichert...";
+
+            const res = await saveToGoogleSheets(teamObj, isUpdate, password);
+
+            if (res && res.status === "error") {
+                showAlertBanner(res.message || "Fehler beim Speichern des Teams.", "error");
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Team bestätigen";
+                return;
+            }
+
+            const returnedPassword = (res && res.password) ? res.password : password;
+            teamObj.password = returnedPassword;
+
+            if (isUpdate && existingIndex !== -1) {
+                submittedTeams[existingIndex] = teamObj;
+            } else {
+                submittedTeams.push(teamObj);
+            }
+            lastCreatedTeam = teamObj;
+
+            renderConfirmedCard(teamObj);
             document.getElementById('selection-form-container').classList.add('hidden');
             document.getElementById('confirmed-team-card').classList.remove('hidden');
 
@@ -835,6 +903,15 @@
         function renderConfirmedCard(team) {
             document.getElementById('display-team-name').textContent = team.name;
             document.getElementById('display-user-name').textContent = `Erstellt von: ${team.userName}`;
+            
+            const pwDisplay = document.getElementById('display-team-password');
+            if (team.password) {
+                pwDisplay.textContent = `Kennwort: ${team.password}`;
+                pwDisplay.classList.remove('hidden');
+            } else {
+                pwDisplay.classList.add('hidden');
+            }
+
             const container = document.getElementById('team-list-container');
             container.innerHTML = '';
 
@@ -899,7 +976,10 @@
                         <div class="w-8 h-8 rounded-lg bg-slate-800 text-rose-400 font-black flex items-center justify-center text-sm border border-slate-700">
                             ${idx + 1}
                         </div>
-                        <span class="font-extrabold text-white text-base sm:text-lg">${escapeHtml(team.name)}</span>
+                        <div>
+                            <span class="font-extrabold text-white text-base sm:text-lg block">${escapeHtml(team.name)}</span>
+                            <span class="text-xs text-slate-400 block mt-0.5 font-normal">von <span class="text-slate-300">${escapeHtml(team.userName || "Unbekannt")}</span></span>
+                        </div>
                     </div>
                     <span class="text-[11px] text-slate-500 italic">Eingereicht</span>
                 `;
