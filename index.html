@@ -36,6 +36,19 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
+        .tab-btn-active {
+            background-color: #E11D48;
+            color: #FFFFFF;
+            box-shadow: 0 4px 14px 0 rgba(225, 29, 72, 0.39);
+        }
+        .tab-btn-inactive {
+            background-color: rgba(15, 23, 42, 0.6);
+            color: #94A3B8;
+        }
+        .tab-btn-inactive:hover {
+            background-color: rgba(30, 41, 59, 0.8);
+            color: #F8FAFC;
+        }
     </style>
 </head>
 <body class="min-h-full text-slate-100 bg-gradient-to-br from-navy-950 via-navy-900 to-slate-950 pb-16 flex flex-col justify-between">
@@ -67,7 +80,26 @@
                 </div>
             </div>
 
-            <div class="w-10 sm:w-12 shrink-0 z-10"></div>
+            <!-- Tab Navigation rechts -->
+            <div class="flex items-center gap-3 z-10">
+                <nav class="hidden md:flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800 text-xs font-bold">
+                    <button id="tab-btn-create" onclick="switchTab('create')" class="tab-btn-active px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
+                        Team erstellen
+                    </button>
+                    <button id="tab-btn-teams" onclick="switchTab('teams')" class="tab-btn-inactive px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
+                        Teams
+                    </button>
+                </nav>
+            </div>
+        </div>
+        <!-- Mobile Tab Navigation Leiste unter dem Header -->
+        <div class="md:hidden bg-slate-900/95 border-t border-slate-800 p-2 flex justify-center gap-1 text-xs font-bold">
+            <button id="tab-btn-create-m" onclick="switchTab('create')" class="tab-btn-active px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-1 justify-center">
+                Team erstellen
+            </button>
+            <button id="tab-btn-teams-m" onclick="switchTab('teams')" class="tab-btn-inactive px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-1 justify-center">
+                Teams
+            </button>
         </div>
     </header>
 
@@ -89,8 +121,8 @@
             </button>
         </div>
 
-        <!-- SECTION: TEAMS & KADER -->
-        <section id="section-teams" class="space-y-8">
+        <!-- SECTION 1: TEAM ERSTELLEN -->
+        <section id="section-create" class="space-y-8">
             <div class="text-center">
                 <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
                     Stelle dein <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-red-400">Fantasy-Team</span> auf
@@ -217,6 +249,35 @@
                     <span class="text-slate-400">Gesamtrating der 4 Spieler mit D-Rating:</span>
                     <span id="confirmed-total-rating" class="font-extrabold text-white text-lg">0 / 3500 Pkt.</span>
                 </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: TEAMS (AUFLISTUNG) -->
+        <section id="section-teams" class="hidden space-y-8">
+            <div class="text-center">
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
+                    Erstellte <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-red-400">Teams</span>
+                </h2>
+                <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto mb-2">
+                    Übersicht aller bisher eingereichten Fantasy-Teams.
+                </p>
+                <p class="text-xs text-slate-500 italic max-w-md mx-auto">
+                    * Ersteller und Kader werden aus Vertraulichkeitsgründen zum aktuellen Zeitpunkt noch nicht öffentlich angezeigt.
+                </p>
+            </div>
+
+            <!-- Lade-Indikator -->
+            <div id="teams-loading-indicator" class="text-center py-12 custom-glass rounded-2xl p-6 space-y-3">
+                <svg class="w-8 h-8 text-rose-500 animate-spin mx-auto" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                <p class="text-slate-300 text-sm font-medium">Teams werden geladen...</p>
+            </div>
+
+            <!-- Liste aller Teams -->
+            <div id="all-teams-container" class="max-w-xl mx-auto space-y-4">
+                <!-- Wird per JS befüllt -->
             </div>
         </section>
 
@@ -382,6 +443,8 @@
         const RATING_CAP = 3500;
         let submittedTeams = [];
         let lastCreatedTeam = null;
+        let currentActiveTab = 'create';
+        let isTeamsLoaded = false; // Status für das Laden
 
         const userNameInput = document.getElementById('user-name');
         const teamNameInput = document.getElementById('team-name');
@@ -411,6 +474,37 @@
             document.getElementById('scoring-info-modal').classList.add('hidden');
         }
 
+        function switchTab(tabId) {
+            currentActiveTab = tabId;
+            document.getElementById('section-create').classList.add('hidden');
+            document.getElementById('section-teams').classList.add('hidden');
+
+            ['create', 'teams'].forEach(id => {
+                const btnDesktop = document.getElementById(`tab-btn-${id}`);
+                const btnMobile = document.getElementById(`tab-btn-${id}-m`);
+                if (btnDesktop) btnDesktop.className = 'tab-btn-inactive px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer';
+                if (btnMobile) btnMobile.className = 'tab-btn-inactive px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-1 justify-center';
+            });
+
+            if (tabId === 'create') {
+                document.getElementById('section-create').classList.remove('hidden');
+                if (document.getElementById('tab-btn-create')) document.getElementById('tab-btn-create').className = 'tab-btn-active px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer';
+                if (document.getElementById('tab-btn-create-m')) document.getElementById('tab-btn-create-m').className = 'tab-btn-active px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-1 justify-center';
+            } else if (tabId === 'teams') {
+                document.getElementById('section-teams').classList.remove('hidden');
+                if (document.getElementById('tab-btn-teams')) document.getElementById('tab-btn-teams').className = 'tab-btn-active px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer';
+                if (document.getElementById('tab-btn-teams-m')) document.getElementById('tab-btn-teams-m').className = 'tab-btn-active px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-1 justify-center';
+                
+                // Sticky Header im 2. Reiter komplett ausblenden
+                stickyHeaderContainer.classList.add('hidden');
+                headerContainer.classList.remove('min-h-[108px]');
+                headerContainer.classList.add('min-h-[72px]');
+
+                renderAllTeamsList();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
         async function fetchPlayersFromSheet() {
             try {
                 const response = await fetch(PLAYERS_API_URL);
@@ -426,7 +520,6 @@
                 ratedPlayers = [];
                 unratedPlayers = [];
 
-                // Erste Zeile (Kopfzeile) überspringen
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i];
                     const name = row[0] ? String(row[0]).trim() : "";
@@ -435,7 +528,6 @@
                     const rawRating = row[1];
                     const ratingNum = Number(rawRating);
 
-                    // Prüfen ob 0, leer oder keine valide Zahl enthalten ist
                     if (rawRating === "" || rawRating === null || isNaN(ratingNum) || ratingNum === 0) {
                         unratedPlayers.push({ name: name, rating: "ohne Rating" });
                     } else {
@@ -486,9 +578,18 @@
                             });
                         }
                     });
+
+                    isTeamsLoaded = true;
+                    if (currentActiveTab === 'teams') {
+                        renderAllTeamsList();
+                    }
                 }
             } catch (error) {
                 console.error("Fehler beim Laden der Teams aus Google Sheets:", error);
+                isTeamsLoaded = true;
+                if (currentActiveTab === 'teams') {
+                    renderAllTeamsList();
+                }
             }
         }
 
@@ -637,7 +738,6 @@
             const userName = userNameInput.value.trim();
             const teamName = teamNameInput.value.trim();
 
-            // Prüfen, ob Kombination aus Ersteller-Name und Teamname bereits existiert
             const existingIndex = submittedTeams.findIndex(t => 
                 t.name.toLowerCase() === teamName.toLowerCase() && 
                 (t.userName || "").toLowerCase() === userName.toLowerCase()
@@ -677,7 +777,6 @@
             };
 
             const isTeamUpdate = (existingIndex !== -1);
-            // An Google Sheets senden (mit isUpdate Flag)
             await saveToGoogleSheets(newTeam, isTeamUpdate);
 
             if (isTeamUpdate) {
@@ -696,7 +795,7 @@
 
             setTimeout(() => {
                 const confirmedCard = document.getElementById('confirmed-team-card');
-                const cardTop = confirmedCard.getBoundingClientRect().top + window.pageYOffset - 110;
+                const cardTop = confirmedCard.getBoundingClientRect().top + window.pageYOffset - 140;
                 window.scrollTo({ top: cardTop, behavior: 'smooth' });
             }, 50);
         }
@@ -734,6 +833,46 @@
             });
 
             document.getElementById('confirmed-total-rating').textContent = `${team.totalRating} / ${RATING_CAP} Pkt.`;
+        }
+
+        function renderAllTeamsList() {
+            const loadingIndicator = document.getElementById('teams-loading-indicator');
+            const container = document.getElementById('all-teams-container');
+            container.innerHTML = '';
+
+            if (!isTeamsLoaded) {
+                loadingIndicator.classList.remove('hidden');
+                return;
+            }
+
+            loadingIndicator.classList.add('hidden');
+
+            if (submittedTeams.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 custom-glass rounded-2xl p-6">
+                        <p class="text-slate-400 text-sm">Bisher wurden noch keine Teams erstellt.</p>
+                        <button onclick="switchTab('create')" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-brand-red text-white rounded-xl text-xs font-bold cursor-pointer">
+                            Jetzt erstes Team erstellen
+                        </button>
+                    </div>`;
+                return;
+            }
+
+            submittedTeams.forEach((team, idx) => {
+                const teamCard = document.createElement('div');
+                teamCard.className = "custom-glass rounded-xl p-4 shadow-lg border border-slate-800 flex items-center justify-between";
+
+                teamCard.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 text-rose-400 font-black flex items-center justify-center text-sm border border-slate-700">
+                            ${idx + 1}
+                        </div>
+                        <span class="font-extrabold text-white text-base sm:text-lg">${escapeHtml(team.name)}</span>
+                    </div>
+                    <span class="text-[11px] text-slate-500 italic">Eingereicht</span>
+                `;
+                container.appendChild(teamCard);
+            });
         }
 
         function shareTeamWhatsApp() {
@@ -796,18 +935,20 @@
             fetchPlayersFromSheet();
 
             const observer = new IntersectionObserver(([entry]) => {
-                if (entry.isIntersecting) {
-                    stickyHeaderContainer.classList.add('hidden');
-                    headerContainer.classList.remove('min-h-[108px]');
-                    headerContainer.classList.add('min-h-[72px]');
-                } else {
-                    stickyHeaderContainer.classList.remove('hidden');
-                    headerContainer.classList.remove('min-h-[72px]');
-                    headerContainer.classList.add('min-h-[108px]');
+                if (currentActiveTab === 'create') {
+                    if (entry.isIntersecting) {
+                        stickyHeaderContainer.classList.add('hidden');
+                        headerContainer.classList.remove('min-h-[108px]');
+                        headerContainer.classList.add('min-h-[72px]');
+                    } else {
+                        stickyHeaderContainer.classList.remove('hidden');
+                        headerContainer.classList.remove('min-h-[72px]');
+                        headerContainer.classList.add('min-h-[108px]');
+                    }
                 }
             }, {
                 root: null,
-                rootMargin: '-80px 0px 0px 0px',
+                rootMargin: '-120px 0px 0px 0px',
                 threshold: 0
             });
 
