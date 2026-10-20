@@ -89,6 +89,9 @@
                     <button id="tab-btn-teams" onclick="switchTab('teams')" class="tab-btn-inactive px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
                         Teams
                     </button>
+                    <button id="tab-btn-live" onclick="switchTab('live')" class="tab-btn-inactive px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
+                        Live-Scoring
+                    </button>
                 </nav>
             </div>
         </div>
@@ -99,6 +102,9 @@
             </button>
             <button id="tab-btn-teams-m" onclick="switchTab('teams')" class="tab-btn-inactive px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-1 justify-center">
                 Teams
+            </button>
+            <button id="tab-btn-live-m" onclick="switchTab('live')" class="tab-btn-inactive px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-1 justify-center">
+                Live-Scoring
             </button>
         </div>
     </header>
@@ -281,6 +287,22 @@
             </div>
         </section>
 
+        <!-- SECTION 3: LIVE-SCORING -->
+        <section id="section-live" class="hidden space-y-6">
+            <div class="text-center">
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
+                    Turnier <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-red-400">Live-Scoring</span>
+                </h2>
+                <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto mb-4">
+                    Verfolge hier die aktuellen Runden und Ergebnisse direkt vom Turnier.
+                </p>
+            </div>
+
+            <div class="custom-glass rounded-2xl overflow-hidden shadow-2xl border border-slate-800 w-full h-[80vh] min-h-[600px]">
+                <iframe src="https://turniere.discgolf.de/index.php?p=events&sp=live&id=2705" class="w-full h-full border-0 bg-white" title="Live-Scoring"></iframe>
+            </div>
+        </section>
+
     </main>
 
     <!-- Modal für Info zur Punktevergabe -->
@@ -444,7 +466,7 @@
         let submittedTeams = [];
         let lastCreatedTeam = null;
         let currentActiveTab = 'create';
-        let isTeamsLoaded = false; // Status für das Laden
+        let isTeamsLoaded = false;
 
         const userNameInput = document.getElementById('user-name');
         const teamNameInput = document.getElementById('team-name');
@@ -478,8 +500,9 @@
             currentActiveTab = tabId;
             document.getElementById('section-create').classList.add('hidden');
             document.getElementById('section-teams').classList.add('hidden');
+            document.getElementById('section-live').classList.add('hidden');
 
-            ['create', 'teams'].forEach(id => {
+            ['create', 'teams', 'live'].forEach(id => {
                 const btnDesktop = document.getElementById(`tab-btn-${id}`);
                 const btnMobile = document.getElementById(`tab-btn-${id}-m`);
                 if (btnDesktop) btnDesktop.className = 'tab-btn-inactive px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer';
@@ -501,6 +524,15 @@
                 headerContainer.classList.add('min-h-[72px]');
 
                 renderAllTeamsList();
+            } else if (tabId === 'live') {
+                document.getElementById('section-live').classList.remove('hidden');
+                if (document.getElementById('tab-btn-live')) document.getElementById('tab-btn-live').className = 'tab-btn-active px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer';
+                if (document.getElementById('tab-btn-live-m')) document.getElementById('tab-btn-live-m').className = 'tab-btn-active px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-1 justify-center';
+                
+                // Sticky Header im 3. Reiter ebenfalls komplett ausblenden
+                stickyHeaderContainer.classList.add('hidden');
+                headerContainer.classList.remove('min-h-[108px]');
+                headerContainer.classList.add('min-h-[72px]');
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
