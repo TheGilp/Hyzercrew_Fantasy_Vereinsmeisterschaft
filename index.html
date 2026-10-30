@@ -549,7 +549,7 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3_Az0JXBIIUfyl9QRQBAuDh_UGmkmYSOmAQ4NFt6znhA2RvF6oBGctYxi_7OtaC1m/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7gpeQW7YwAAyLI3JhehiXZuPP0deG0VMDNMp6wcUiFHwTmtFCBdC6VWeGNKBZX7wg/exec";
         const PLAYERS_API_URL = "https://script.google.com/macros/s/AKfycbyvVoSyo324pKqgkEIDzcdRGlMYup-gj46D1080yElZgH8udg6YF4mIWXnCalVgd9NJWA/exec";
         const SCORECARD_API_URL = "https://script.google.com/macros/s/AKfycbyWLYwB6lNI1mHpnz0Mc2rldoRrq3FJqWTku91XZWiDHAOcJ2ClYm2kJp_Qj9kcxb2SqA/exec";
         const SCORECARD_ROUND2_API_URL = "https://script.google.com/macros/s/AKfycbzZcq-8K7qZf0ulDg7bgQ6CrTU2L4dNrQYAB2ZrjhSAPTW44GSpfkFs2-m6u5BI9s4S/exec";
@@ -1636,7 +1636,7 @@
                 return await res.json();
             } catch (error) {
                 console.error("Fehler beim Speichern in Google Sheets:", error);
-                return { status: "error", message: error.toString() };
+                return { status: "error", message: "Zum aktuellen Zeitpunkt können keine Teams erstellt oder bearbeitet werden" };
             }
         }
 
@@ -1690,7 +1690,8 @@
 
             const res = await saveToGoogleSheets(teamObj, isUpdate, password);
             if (res && res.status === "error") {
-                showAlertBanner(res.message || "Fehler beim Speichern des Teams.", "error");
+                const errorMsg = res.message || "Zum aktuellen Zeitpunkt können keine Teams erstellt oder bearbeitet werden";
+                showAlertBanner(errorMsg, "error");
                 submitBtn.disabled = false;
                 submitBtn.textContent = "Team bestätigen";
                 return;
